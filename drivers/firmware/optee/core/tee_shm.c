@@ -260,6 +260,7 @@ int tee_shm_alloc_fd(struct tee_context *ctx, struct tee_shm_io *shm_io)
 		return PTR_ERR(shm);
 	}
 
+	shm_io->size = shm->size_req;
 	shm_io->fd_shm = get_fd(tee, shm);
 	if (shm_io->fd_shm <= 0) {
 		tee_shm_free(shm);
@@ -402,7 +403,9 @@ static dma_addr_t get_phy_addr(struct tee *tee, struct tee_shm_io *shm_io)
 	if (!mm)
 		mm = current->active_mm;
 
+	down_read(&mm->mmap_sem);
 	vma = find_vma(mm, (unsigned long)shm_io->buffer);
+	up_read(&mm->mmap_sem);
 	BUG_ON(!vma);
 	shm = vma->vm_private_data;
 
@@ -410,6 +413,8 @@ static dma_addr_t get_phy_addr(struct tee *tee, struct tee_shm_io *shm_io)
 	/* Consider it has been allowd by the TEE */
 	return shm->paddr;
 }
+
+extern struct tee_shm *tee_shm_fb;
 
 struct tee_shm *tee_shm_get(struct tee_context *ctx, struct tee_shm_io *shm_io)
 {
@@ -434,6 +439,10 @@ struct tee_shm *tee_shm_get(struct tee_context *ctx, struct tee_shm_io *shm_io)
 	buffer = get_phy_addr(ctx->tee, shm_io);
 	if (!buffer)
 		return NULL;
+
+	if (buffer == (dma_addr_t)0xFF000000) {
+		return tee_shm_fb;
+	}
 
 	if (!list_empty(&ctx->list_shm)) {
 		list_for_each(pshm, &ctx->list_shm) {

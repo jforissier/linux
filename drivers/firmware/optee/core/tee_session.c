@@ -99,12 +99,19 @@ static int tee_session_open_be(struct tee_session *sess,
 	if (ret)
 		goto out;
 
+#if 0 /* FIXME Crash when DEBUG is defined */
 	if (cmd.uuid) {
+		dev_dbg(_DEV(tee), "cmd.uuid=%p\n", cmd.uuid);
+		dev_dbg(_DEV(tee), "cmd.uuid->kaddr=%p\n", cmd.uuid->kaddr);
 		dev_dbg(_DEV(tee), "%s: UUID=%s\n", __func__,
 			_uuid_to_str((struct teec_uuid *) cmd.uuid->kaddr));
 	}
+#else
+	(void)_uuid_to_str;
+#endif
 
 	ret = tee->ops->open(sess, &cmd);
+	dev_dbg(_DEV(tee), "After open");
 	if (ret == 0)
 		_update_client_tee_cmd(sess, cmd_io, &cmd);
 	else {
@@ -558,14 +565,17 @@ static int _copy_op(struct tee_session *sess, struct tee_cmd_io *cmd_io,
 			BUG_ON(!param->c_shm[idx].buffer);
 			BUG_ON(!param->c_shm[idx].size);
 
-			if (param->c_shm[idx].flags == TEEC_MEM_INPUT)
+#define INOUT(f) ((f) & (TEEC_MEM_INPUT | TEEC_MEM_OUTPUT))
+			if (INOUT(param->c_shm[idx].flags) ==
+					TEEC_MEM_INPUT)
 				type = TEEC_MEMREF_TEMP_INPUT;
-			else if (param->c_shm[idx].flags == TEEC_MEM_OUTPUT)
+			else if (INOUT(param->c_shm[idx].flags) ==
+					TEEC_MEM_OUTPUT)
 				type = TEEC_MEMREF_TEMP_OUTPUT;
-			else if (param->c_shm[idx].flags ==
-				 (TEEC_MEM_INPUT | TEEC_MEM_OUTPUT))
+			else if (INOUT(param->c_shm[idx].flags) ==
+					(TEEC_MEM_INPUT | TEEC_MEM_OUTPUT))
 				type = TEEC_MEMREF_TEMP_INOUT;
-
+#undef INOUT
 			if (check_shm
 			    (tee, (struct tee_shm_io *)&param->c_shm[idx])) {
 				dev_dbg(_DEV_TEE,

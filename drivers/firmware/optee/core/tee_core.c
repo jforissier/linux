@@ -313,6 +313,7 @@ static int tee_do_shm_alloc(struct tee_context *ctx,
 		goto exit;
 
 	put_user(k_shm.fd_shm, &u_shm->fd_shm);
+	put_user(k_shm.size, &u_shm->size);
 
 exit:
 	dev_dbg(_DEV(tee), "%s: < ret=%d, shmfd=%d\n", __func__, ret,

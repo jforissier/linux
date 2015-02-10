@@ -738,6 +738,11 @@ static int tz_close(struct tee_session *sess)
 	return ret;
 }
 
+/* HACK */
+struct tee_shm *tee_shm_fb = NULL;
+static const dma_addr_t fb_base = 0xFF000000; /* optee_os FRAMEBUFFER_BASE */
+static const size_t fb_size = 0x00200000; /* optee_os FRAMEBUFFER_SIZE */
+
 static struct tee_shm *tz_alloc(struct tee *tee, size_t size, uint32_t flags)
 {
 	struct tee_shm *shm = NULL;
@@ -759,6 +764,22 @@ static struct tee_shm *tz_alloc(struct tee *tee, size_t size, uint32_t flags)
 	if (!shm) {
 		dev_err(tee->dev, "%s: kzalloc failed\n", __func__);
 		return ERR_PTR(-ENOMEM);
+	}
+
+	if (flags & TEEC_MEM_FRAMEBUFFER) {
+		dev_dbg(tee->dev, "%s: framebuffer requested\n", __func__);
+		if (size > fb_size) {
+			dev_err(tee->dev, "%s: req size > FB size "
+				"(0x%zx > 0x%zx)\n", __func__, size, fb_size);
+			devm_kfree(tee->dev, shm);
+			return ERR_PTR(-ENOMEM);
+		}
+		shm->paddr = fb_base;
+		shm->size_alloc = fb_size;
+		shm->size_req = fb_size;
+		shm->flags = flags;
+		tee_shm_fb = shm;
+		goto out;
 	}
 
 	shm->size_alloc = ((size / SZ_4K) + 1) * SZ_4K;
@@ -783,6 +804,7 @@ static struct tee_shm *tz_alloc(struct tee *tee, size_t size, uint32_t flags)
 	if (ptee->shm_cached)
 		shm->flags |= TEE_SHM_CACHED;
 
+out:
 	dev_dbg(tee->dev, "%s: kaddr=%p, paddr=%p, shm=%p, size %x:%x\n",
 		__func__, shm->kaddr, (void *)shm->paddr, shm,
 		(unsigned int)shm->size_req, (unsigned int)shm->size_alloc);
@@ -803,6 +825,11 @@ static void tz_free(struct tee_shm *shm)
 	ptee = tee->priv;
 
 	dev_dbg(tee->dev, "%s: shm=%p\n", __func__, shm);
+
+	if (shm->paddr == fb_base) {
+		dev_dbg(tee->dev, "%s: shm is framebuffer\n", __func__);
+		return;
+	}
 
 	ret = tee_shm_pool_free(tee->dev, ptee->shm_pool, shm->paddr, &size);
 	if (!ret) {
@@ -1112,7 +1139,8 @@ static int tz_tee_init(struct platform_device *pdev)
 #endif
 #endif
 
-	tee->shm_flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
+	tee->shm_flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT |
+			TEEC_MEM_FRAMEBUFFER;
 	tee->test = 0;
 
 	ptee->started = false;
