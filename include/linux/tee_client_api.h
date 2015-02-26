@@ -121,9 +121,17 @@
  *                  application to the Trusted Application.
  * TEEC_MEM_OUTPUT  The Shared Memory can carry data from the Trusted
  *                  Application to the client application.
+ * TEEC_MEM_DMABUF  The Shared Memory is allocated with the dma buf api and
+ *                  not necessarly user mapped.
+ *                  Handle of the memory pass to drivers is the implementation
+ *                  fd field instead of the buffer field.
+ * TEEC_MEM_KAPI    Shared memory is required from another linux module.
+ *                  Dma buf file descriptor is not created.
  */
 #define TEEC_MEM_INPUT   0x00000001
 #define TEEC_MEM_OUTPUT  0x00000002
+#define TEEC_MEM_DMABUF  0x00010000
+#define TEEC_MEM_KAPI    0x00020000
 
 /**
  * Return values. Type is TEEC_Result
