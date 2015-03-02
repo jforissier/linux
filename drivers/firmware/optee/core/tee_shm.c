@@ -726,6 +726,7 @@ struct tee_shm *tee_shm_get(struct tee_context *ctx, struct teec_shm *c_shm,
 	shm->size_req = size;
 	shm->size_alloc = 0;
 
+#if 0 /* Won't build on 64-bit (FVP) */
 	if (c_shm->flags & TEEC_MEM_KAPI) {
 		struct tee_shm *kc_shm = (struct tee_shm *)c_shm->d.fd;
 		if (!kc_shm) {
@@ -744,7 +745,9 @@ struct tee_shm *tee_shm_get(struct tee_context *ctx, struct teec_shm *c_shm,
 
 		dev_dbg(_DEV(tee), "fd=%d @p=%p\n",
 				c_shm->d.fd, (void *)shm->paddr);
-	} else if (c_shm->d.fd) {
+	} else
+#endif
+	if (c_shm->d.fd) {
 		ret = tee_shm_db_get(tee, shm,
 				c_shm->d.fd, c_shm->flags, size, offset);
 		if (ret)
@@ -776,8 +779,8 @@ void tee_shm_put(struct tee_context *ctx, struct tee_shm *shm)
 {
 	struct tee *tee = ctx->tee;
 
-	dev_dbg(_DEV(tee), "%s: > shm=%p flags=%08x paddr=%x\n",
-			__func__, (void *)shm, shm->flags, shm->paddr);
+	dev_dbg(_DEV(tee), "%s: > shm=%p flags=%08x paddr=%p\n",
+			__func__, (void *)shm, shm->flags, (void *)shm->paddr);
 
 	BUG_ON(!shm);
 	BUG_ON(!(shm->flags & TEE_SHM_MEMREF));
