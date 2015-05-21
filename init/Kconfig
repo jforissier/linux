@@ -2061,3 +2061,6 @@ config ASN1
 	  functions to call on what tags.
 
 source "kernel/Kconfig.locks"
+
+config HAVE_ARM_SMCCC
+	bool
