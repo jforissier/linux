@@ -28,4 +28,9 @@
 		device_type = "memory";
 		reg = <0x0 0x0 0x0 0x40000000>;
 	};
+
+	optee {
+		compatible = "optee,optee-tz";
+		method = "smc";
+	};
 };
