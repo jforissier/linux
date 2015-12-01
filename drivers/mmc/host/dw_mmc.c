@@ -330,7 +330,7 @@ static u32 dw_mci_prep_stop_abort(struct dw_mci *host, struct mmc_command *cmd)
 	return cmdr;
 }
 
-static void dw_mci_wait_while_busy(struct dw_mci *host, u32 cmd_flags)
+static int dw_mci_wait_while_busy(struct dw_mci *host, u32 cmd_flags)
 {
 	unsigned long timeout = jiffies + msecs_to_jiffies(500);
 
@@ -346,13 +346,20 @@ static void dw_mci_wait_while_busy(struct dw_mci *host, u32 cmd_flags)
 	    !(cmd_flags & SDMMC_CMD_VOLT_SWITCH)) {
 		while (mci_readl(host, STATUS) & SDMMC_STATUS_BUSY) {
 			if (time_after(jiffies, timeout)) {
-				/* Command will fail; we'll pass error then */
-				dev_err(host->dev, "Busy; trying anyway\n");
-				break;
+				dev_err(host->dev, "card not ready: "
+
+#if defined CONFIG_MMC_DW_K3
+				"aborting command\n");
+				return -EBUSY;
+#else
+				"sending command anyway\n");
+				return 0;
+#endif
 			}
 			udelay(10);
 		}
 	}
+	return 0;
 }
 
 static void dw_mci_start_command(struct dw_mci *host,
@@ -897,10 +904,33 @@ static void mci_send_cmd(struct dw_mci_slot *slot, u32 cmd, u32 arg)
 	struct dw_mci *host = slot->host;
 	unsigned long timeout = jiffies + msecs_to_jiffies(500);
 	unsigned int cmd_status = 0;
+	int rc;
 
 	mci_writel(host, CMDARG, arg);
 	wmb();
-	dw_mci_wait_while_busy(host, cmd);
+
+	rc = dw_mci_wait_while_busy(host, cmd);
+	if (rc) {
+		dev_err(&slot->mmc->class_dev,
+			"Timeout preparing command (cmd %#x arg %#x status %#x)\n",
+			cmd, arg, cmd_status);
+
+		/*
+		 * So, if the prep command times out because the card is stuck
+		 * in busy for whatever reason, just aborting here will muck
+		 * up the command request state machine. So be a little more
+		 * aggressive and reset the host.
+		 *
+		 * Though if this error happens before the first request, which
+		 * means the cur_slot value may be uninitialized. So set it here
+		 * if necessary.
+		 */
+		if (!host->cur_slot)
+			host->cur_slot = slot;
+		dw_mci_reset(host);
+		return;
+	}
+
 	mci_writel(host, CMD, SDMMC_CMD_START | cmd);
 
 	while (time_before(jiffies, timeout)) {
