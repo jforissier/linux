@@ -33,7 +33,7 @@ struct k3_priv {
 /* only enable MMC_CAP_CMD23 for eMMC controller */
 static unsigned long dw_mci_hi6220_caps[] = {
 	MMC_CAP_CMD23,
-	0,
+	MMC_CAP_CMD23,
 	0
 };
 
