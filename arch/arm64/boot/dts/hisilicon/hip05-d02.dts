@@ -30,6 +30,13 @@
 		stdout-path = "serial0:115200n8";
 		bootargs = "earlycon=uart8250,mmio32,0x80300000 console=ttyS0,115200 initrd=0x7000000,350M";
 	};
+
+	firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
+	};
 };
 
 &uart0 {
