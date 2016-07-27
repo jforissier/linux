@@ -27,7 +27,7 @@
 
 #define DRIVER_NAME "optee"
 
-#define OPTEE_SHM_NUM_PRIV_PAGES	1
+#define OPTEE_SHM_NUM_PRIV_PAGES	2
 
 /**
  * optee_from_msg_param() - convert from OPTEE_MSG parameters to
