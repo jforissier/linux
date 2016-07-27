@@ -28,8 +28,8 @@
 		ranges;
 
 		optee@0x50000000 {
-			/* 2 MiB SHM, 1 MiB TEE core, 15 MiB TA */
-			reg = <0x0 0x50000000 0x0 0x01200000>;
+			/* 24 MiB */
+			reg = <0x0 0x50000000 0x0 0x01800000>;
 		};
 	};
 
