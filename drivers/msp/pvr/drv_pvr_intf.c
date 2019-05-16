@@ -252,7 +252,8 @@ HI_S32 PVR_DRV_ModInit(HI_VOID)
     PvrFileOps.compat_ioctl	= PVR_DRV_Ioctl;
 #endif
 
-    strncpy(PvrDev.devfs_name, UMAP_DEVNAME_PVR, sizeof(UMAP_DEVNAME_PVR));
+    strncpy(PvrDev.devfs_name, UMAP_DEVNAME_PVR, sizeof(PvrDev.devfs_name));
+    PvrDev.devfs_name[sizeof(PvrDev.devfs_name)-1] = '\0';
     PvrDev.minor  = UMAP_MIN_MINOR_PVR;
     PvrDev.owner  = THIS_MODULE;
     PvrDev.fops	  = &PvrFileOps;

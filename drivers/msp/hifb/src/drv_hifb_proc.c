@@ -476,7 +476,7 @@ static inline HI_VOID HIFB_PROC_SetAlpha(HI_U32 u32LayerId, HI_CHAR *pCmd)
     HI_CHAR TmpCmd[HIFB_FILE_NAME_MAX_LEN]={0};
     HI_CHAR *pStr = HI_NULL;
 
-    strncpy(TmpCmd,pCmd,(HIFB_FILE_NAME_MAX_LEN-1));
+    strncpy(TmpCmd,pCmd,HIFB_FILE_NAME_MAX_LEN);
     TmpCmd[HIFB_FILE_NAME_MAX_LEN-1] = '\0';
 
     pStr = strstr(TmpCmd, "=");
