@@ -133,6 +133,7 @@ busybox-cleaner: busybox-clean-common busybox-cleaner-common
 EDK2_ARCH ?= AARCH64
 EDK2_DSC ?= OpenPlatformPkg/Platforms/Hisilicon/HiKey/HiKey.dsc
 EDK2_TOOLCHAIN ?= GCC49
+EDK2_BUILD_CC ?= gcc-8
 
 EDK2_CONSOLE_UART ?= $(CFG_NW_CONSOLE_UART)
 ifeq ($(EDK2_CONSOLE_UART),0)
@@ -151,7 +152,7 @@ edk2:
 	cd $(EDK2_PATH) && rm -rf OpenPlatformPkg && \
 		ln -s $(OPENPLATPKG_PATH)
 	set -e && cd $(EDK2_PATH) && source edksetup.sh && \
-		$(MAKE) -j1 -C $(EDK2_PATH)/BaseTools && \
+		$(MAKE) -j1 -C $(EDK2_PATH)/BaseTools BUILD_CC=$(EDK2_BUILD_CC) && \
 		$(call edk2-call)
 
 .PHONY: edk2-clean
