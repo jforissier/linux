@@ -309,7 +309,7 @@ GRUB_MODULES += boot chain configfile efinet ext2 fat gettext \
                 search_label terminal terminfo tftp time
 
 $(GRUB_PATH)/configure: $(GRUB_PATH)/configure.ac
-	cd $(GRUB_PATH) && ./autogen.sh
+	cd $(GRUB_PATH) && ./bootstrap
 
 $(GRUB_PATH)/Makefile: $(GRUB_PATH)/configure
 	cd $(GRUB_PATH) && ./configure --target=aarch64 --enable-boot-time $(grub-flags)
